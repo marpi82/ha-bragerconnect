@@ -82,7 +82,6 @@ README content if this was a published component:
 ![Project Maintenance][maintenance-shield]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-[![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
 _Component to integrate with [bragerconnect][bragerconnect]._
@@ -95,7 +94,7 @@ Platform | Description
 `sensor` | Show info from blueprint API.
 `switch` | Switch something `True` or `False`.
 
-![example][exampleimg]
+![brager][bragerimg]
 
 ## Installation
 
@@ -140,9 +139,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [commits]: https://github.com/marpi82/ha-bragerconnect/commits/master
 [hacs]: https://github.com/custom-components/hacs
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[exampleimg]: example.png
+[bragerimg]: images/brager_logo.svg
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
 [license-shield]: https://img.shields.io/github/license/marpi82/bragerconnect.svg?style=for-the-badge
