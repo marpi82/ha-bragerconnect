@@ -72,7 +72,7 @@ to ensure Home Assistant update the code of the python library. (example `"requi
 README content if this was a published component:
 ***
 
-# integration_blueprint
+# bragerconnect
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -85,7 +85,7 @@ README content if this was a published component:
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-_Component to integrate with [integration_blueprint][integration_blueprint]._
+_Component to integrate with [bragerconnect][bragerconnect]._
 
 **This component will set up the following platforms.**
 
@@ -133,11 +133,11 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 ***
 
-[integration_blueprint]: https://github.com/custom-components/integration_blueprint
-[buymecoffee]: https://www.buymeacoffee.com/ludeeus
+[bragerconnect]: https://github.com/marpi82/ha-bragerconnect
+[buymecoffee]: https://www.buymeacoffee.com/marpi82
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/custom-components/blueprint.svg?style=for-the-badge
-[commits]: https://github.com/custom-components/integration_blueprint/commits/master
+[commits-shield]: https://img.shields.io/github/commit-activity/y/marpi82/bragerconnect.svg?style=for-the-badge
+[commits]: https://github.com/marpi82/ha-bragerconnect/commits/master
 [hacs]: https://github.com/custom-components/hacs
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
@@ -145,7 +145,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/custom-components/blueprint.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/marpi82/bragerconnect.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Joakim%20Sørensen%20%40ludeeus-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/custom-components/blueprint.svg?style=for-the-badge
-[releases]: https://github.com/custom-components/integration_blueprint/releases
+[releases-shield]: https://img.shields.io/github/release/marpi82/bragerconnect.svg?style=for-the-badge
+[releases]: https://github.com/marpi82/ha-bragerconnect/releases
