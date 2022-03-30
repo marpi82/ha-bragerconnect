@@ -1,0 +1,18 @@
+{
+  "domain": "bragerconnect",
+  "name": "BragerConnect",
+  "config_flow": true,
+  "documentation": "https://github.com/marpi82/ha-bragerconnect",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [
+    "websockets"
+  ],
+  "codeowners": [
+    "@marpi82"
+  ],
+  "iot_class": "cloud_push",
+  "version": "0.1.0"
+}
