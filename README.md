@@ -1,4 +1,5 @@
-# bragerconnect
+![brager][bragerimg]
+_Component to integrate with [BragerConnect][bragerconnect]._
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -9,9 +10,6 @@
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 [![Community Forum][forum-shield]][forum]
-
-![brager][bragerimg]
-_Component to integrate with [BragerConnect][bragerconnect]._
 
 **This component will set up the following platforms.**
 
