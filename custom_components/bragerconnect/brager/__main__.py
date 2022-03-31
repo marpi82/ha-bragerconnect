@@ -7,7 +7,7 @@ from . import BragerConnect
 
 
 async def main() -> None:
-    """Main function"""
+    """Main async function"""
     async with BragerConnect() as brager:
         await brager.connect(username, password)
 
