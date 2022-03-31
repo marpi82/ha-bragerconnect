@@ -13,4 +13,4 @@ JSON_TYPE = Optional[dict[str, Union[list, dict, str]]]  # pylint: disable=inval
 DEVICE_INFO_TYPE = Optional[  # pylint: disable=invalid-name
     dict[str, Optional[Union[str, int, bool]]]
 ]
-POOL_DATA = dict[int, dict[int, dict[str, Union[int, float, str]]]]
+POOL_DATA = dict[int, dict[int, dict[str, Union[int, float, str]]]]  # pylint: disable=invalid-name
