@@ -60,14 +60,14 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [bragerconnect]: https://cloud.bragerconnect.com
 [buymecoffee]: https://www.buymeacoffee.com/marpi82
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/marpi82/bragerconnect.svg?style=for-the-badge
+[commits-shield]: https://img.shields.io/github/commit-activity/y/marpi82/ha-bragerconnect.svg?style=for-the-badge
 [commits]: https://github.com/marpi82/ha-bragerconnect/commits/master
 [hacs]: https://github.com/custom-components/hacs
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [bragerimg]: images/brager_logo.svg
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/marpi82/bragerconnect.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/marpi82/ha-bragerconnect.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Marek%20Pilch%20%40marpi82-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/marpi82/bragerconnect.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/marpi82/ha-bragerconnect.svg?style=for-the-badge
 [releases]: https://github.com/marpi82/ha-bragerconnect/releases
