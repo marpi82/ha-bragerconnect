@@ -3,13 +3,13 @@
   "name": "BragerConnect",
   "config_flow": true,
   "documentation": "https://github.com/marpi82/ha-bragerconnect",
-  "requirements": [],
+  "requirements": [
+    "websockets==10.2"
+  ],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [
-    "websockets"
-  ],
+  "dependencies": [],
   "codeowners": [
     "@marpi82"
   ],
