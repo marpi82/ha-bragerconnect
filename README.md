@@ -10,7 +10,8 @@
 
 [![Community Forum][forum-shield]][forum]
 
-_Component to integrate with [bragerconnect][bragerconnect]._
+![brager][bragerimg]
+_Component to integrate with [BragerConnect][bragerconnect]._
 
 **This component will set up the following platforms.**
 
@@ -19,8 +20,6 @@ Platform | Description
 `binary_sensor` | Show something `True` or `False`.
 `sensor` | Show info from blueprint API.
 `switch` | Switch something `True` or `False`.
-
-![brager][bragerimg]
 
 ## Installation
 
@@ -58,7 +57,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 
 ***
 
-[bragerconnect]: https://github.com/marpi82/ha-bragerconnect
+[bragerconnect]: https://cloud.bragerconnect.com
 [buymecoffee]: https://www.buymeacoffee.com/marpi82
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/marpi82/bragerconnect.svg?style=for-the-badge
