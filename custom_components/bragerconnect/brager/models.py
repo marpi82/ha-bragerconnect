@@ -7,7 +7,11 @@ from enum import IntEnum
 from dataclasses import dataclass
 from typing import Optional, Any
 
-from .const import POOLS_TO_PROCESS  # pylint: disable=unused-import
+from .const import (
+    JSON_TYPE,
+    POOL_DATA,
+    POOLS_TO_PROCESS, # pylint: disable=unused-import
+)
 from .exceptions import BragerError
 
 
@@ -93,13 +97,16 @@ class BragerInfo:
     alert: Optional[bool] = None  # ":false
 
     @staticmethod
-    def from_dict(data: dict[str, Any]) -> BragerInfo:
+    def from_dict(data: JSON_TYPE) -> BragerInfo:
         """Return BragerDeviceInfo object from BragerConnect API response.
         Args:
             data: The data from the BragerConnect service API.
         Returns:
             A BragerDeviceInfo object.
         """
+
+        if not data:
+            raise BragerError("Brager info data is incomplete, cannot construct BragerInfo object")
 
         username = data.get("username")
         devid = data.get("devid")
@@ -117,9 +124,7 @@ class BragerInfo:
             warranty_void = bool(warranty_void)
 
         if username is None or devid is None:
-            raise BragerError(
-                "BragerDeviceInfo data is incomplete, cannot construct info object."
-            )
+            raise BragerError("BragerDeviceInfo data is incomplete, cannot construct info object.")
 
         return BragerInfo(
             username=username,
@@ -147,21 +152,17 @@ class BragerPool:
     """Object holding Brager Device Pool information."""
 
     # data[pool_number][field_number][field_type] = value
-    data: dict[int, dict[int, dict[str, int | float | str]]]
-    unit: dict[int, Any]
-    name: dict[str, dict[int, str]]
+    data: POOL_DATA
+    unit: JSON_TYPE
+    name: JSON_TYPE
 
     @staticmethod
-    def from_dict(
-        data: dict[str, dict[str, int | float | str]], lang: str = "pl"
-    ) -> BragerPool:
+    def from_dict(data: JSON_TYPE, lang: str = "pl") -> BragerPool:
         """TODO: docstring"""
         if not data:
-            raise BragerError(
-                "BragerPool data is empty, can't create BragerPool object"
-            )
+            raise BragerError("BragerPool data is empty, can't create BragerPool object")
 
-        _data: dict[int, dict[int, dict[str, int | float | str]]] = {}
+        _data: POOL_DATA = {}
 
         try:
             path = Path(__file__).parent
@@ -172,6 +173,9 @@ class BragerPool:
         else:
             _unit = json.load(unit_f)
             _name = json.load(name_f)
+
+            if not _unit or not _name:
+                raise BragerError("Error loading data from JSON file.")
         finally:
             unit_f.close()
             name_f.close()
@@ -181,39 +185,29 @@ class BragerPool:
                 pool_no = int(pool_name[1:])
                 field_no = int(field_name[1:])
                 field_t = str(field_name[0])
-                _data.setdefault(pool_no, {}).setdefault(field_no, {})[
-                    field_t
-                ] = field_value
+                _data.setdefault(pool_no, {}).setdefault(field_no, {})[field_t] = field_value
 
         if not _data:
-            raise BragerError(
-                "BragerPool data is empty, can't create BragerPool object"
-            )
+            raise BragerError("BragerPool data is empty, can't create BragerPool object")
 
         return BragerPool(data=_data, unit=_unit, name=_name)
 
-    def update_from_list(self, data: list[dict[str, int | float | str]]):
+    def update_from_list(self, data: list[JSON_TYPE]):
         """TODO: docstring"""
+        if not data:
+            raise BragerError("BragerPool data is empty, can't update BragerPool object")
+
         for _param in data:
             if any(
-                key not in _param and _param[key] is not None
-                for key in ("pool", "field", "value")
+                key not in _param and _param[key] is not None for key in ("pool", "field", "value")
             ):
-                raise BragerError(
-                    "BragerPool data is incomplete, cannot update pool object"
-                )
+                raise BragerError("BragerPool data is incomplete, cannot update pool object")
 
-            self.set_field_s(
-                _param.get("pool"), _param.get("field"), _param.get("value")
-            )
+            self.set_field_s(_param.get("pool"), _param.get("field"), _param.get("value"))
 
-    def get_field(
-        self, pool_no: int, field_no: int, field_type: str
-    ) -> int | float | str:
+    def get_field(self, pool_no: int, field_no: int, field_type: str) -> int | float | str:
         """TODO: docstring"""
-        return (
-            self.data.setdefault(pool_no, {}).setdefault(field_no, {}).get(field_type)
-        )
+        return self.data.setdefault(pool_no, {}).setdefault(field_no, {}).get(field_type)
 
     def get_field_s(self, pool_name: str, field_name: str) -> int | float | str:
         """TODO: docstring"""
@@ -229,13 +223,9 @@ class BragerPool:
         """TODO: docstring"""
         self.data.setdefault(pool_no, {}).setdefault(field_no)[field_type] = value
 
-    def set_field_s(
-        self, pool_name: str, field_name: str, value: int
-    ) -> int | float | str:
+    def set_field_s(self, pool_name: str, field_name: str, value: int) -> int | float | str:
         """TODO: docstring"""
-        self.data.setdefault(pool_name[1:], {}).setdefault(field_name[1:])[
-            field_name[0]
-        ] = value
+        self.data.setdefault(pool_name[1:], {}).setdefault(field_name[1:])[field_name[0]] = value
 
     def get_unit_by_no(self, unit_no: int) -> str | None:
         """TODO: docstring"""
@@ -275,8 +265,11 @@ class BragerTask:
     updated_at: str  # date
 
     @staticmethod
-    def from_dict(data: dict[str, Any]) -> BragerTask:
+    def from_dict(data: JSON_TYPE) -> BragerTask:
         """TODO: docstring"""
+        if not data:
+            raise BragerError("BragerTask data is empty, can't create BragerTask object")
+
         return BragerTask(
             tid=data.get("id"),
             module_id=data.get("module_id"),
@@ -310,6 +303,9 @@ class BragerAlarm:
     @staticmethod
     def from_dict(data: list[str, Any]) -> BragerAlarm:
         """TODO: docstring"""
+        if not data:
+            raise BragerError("BragerAlarm data is empty, can't create BragerAlarm object")
+
         return BragerAlarm(
             name=data.get("name"),
             value=data.get("value"),
@@ -328,9 +324,7 @@ class BragerStatus:
         """TODO: docstring"""
         # Check if all elements are in the passed dict, else raise an Error
         if any(key not in pool.data and pool.data[key] is not None for key in (4, 5)):
-            raise BragerError(
-                "Brager pool data is incomplete, cannot construct status object"
-            )
+            raise BragerError("Brager pool data is incomplete, cannot construct status object")
 
         return BragerStatus(_pool=pool)
 
@@ -471,28 +465,28 @@ class BragerStatus:
             return TestStatus.NOSTATUS
         return None
 
-    def get(self) -> dict[int, dict[int, dict[str, int | float | str]]] | None:
+    def get(self) -> Optional[POOL_DATA]:
         """TODO: docstring"""
 
         def set_data(_pool: int, _field: int, _value: str):
-            _data.setdefault(_pool, {}).setdefault(_field, {})[
-                "name"
-            ] = self._pool.get_name(_pool, _field)
+            _data.setdefault(_pool, {}).setdefault(_field, {})["name"] = self._pool.get_name(
+                _pool, _field
+            )
             _data[_pool][_field]["value"] = self._pool.get_field(_pool, _field, _value)
             _data[_pool][_field]["unit"] = self._pool.get_unit(_pool, _field)
 
         def set_data_status(_pool: int, _field: int, func=lambda a: a):
             status: IntEnum | int = func(self._pool.get_field(_pool, _field, "s"))
             if isinstance(status, (int, IntEnum)):
-                _data.setdefault(_pool, {}).setdefault(_field, {})[
-                    "name"
-                ] = self._pool.get_name(_pool, _field)
+                _data.setdefault(_pool, {}).setdefault(_field, {})["name"] = self._pool.get_name(
+                    _pool, _field
+                )
                 _data[_pool][_field]["value"] = status
 
         def units(first: int, second: int) -> set:
             return ("kW", 1) if first == 31 or second else ("kW", 0.1)
 
-        _data: dict[int, dict[int, dict[str, int | float | str]]] = {}
+        _data: POOL_DATA = {}
 
         # external temperature sensor
         if isinstance(self._pool.get_field(4, 4, "v"), (int, float)):
@@ -534,9 +528,7 @@ class BragerStatus:
                             self._pool.get_field(6, 152, "s"),
                         )
                         print(f"u:{unit}, m:{multiplier}")
-                        _data[4][14]["value"] = round(
-                            _data[4][14]["value"] * multiplier, 1
-                        )
+                        _data[4][14]["value"] = round(_data[4][14]["value"] * multiplier, 1)
                         _data[4][14]["unit"] = unit
                     # calculate fuel consumption ever
                     if par == 61:
@@ -689,16 +681,13 @@ class BragerDevice:
     alarm: Optional[list[BragerAlarm]] = None
     status: Optional[BragerStatus] = None
 
-    def __init__(self, data: dict[str, dict[str, Any]]) -> None:
+    def __init__(self, data: JSON_TYPE) -> None:
         """TODO: docstring"""
         # Check if all elements are in the passed dict, else raise an Error
         if any(
-            key not in data and data[key] is not None
-            for key in ("info", "pool", "task", "alarm")
+            key not in data and data[key] is not None for key in ("info", "pool", "task", "alarm")
         ):
-            raise BragerError(
-                "BragerDevice data is incomplete, cannot construct device object"
-            )
+            raise BragerError("BragerDevice data is incomplete, cannot construct device object")
 
         self.update_from_dict(data)
 
@@ -713,7 +702,7 @@ class BragerDevice:
         self.status = _status
         return _status
 
-    def update_from_dict(self, data: dict[str, Any]) -> BragerDevice:
+    def update_from_dict(self, data: JSON_TYPE) -> BragerDevice:
         """TODO: docstring"""
         if _info := data.get("info"):
             self.info = BragerInfo.from_dict(data=_info)
