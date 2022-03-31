@@ -123,8 +123,7 @@ class BragerConnect:
         _LOGGER.debug("Creating task for received messages processing")
         self._loop.create_task(self._process_messages())
 
-        if not await self._login(username, password):
-            raise BragerAuthError("Error when logging in: wrong username/password")
+        await self._login(username, password)
 
         if not self._language:
             if not (
@@ -258,20 +257,24 @@ class BragerConnect:
             return True
 
         _LOGGER.debug("Logging in.")
-
-        self._logged_in = (
-            await self.wrkfnc_execute(
-                "s_login",
-                [
-                    username,
-                    password,
-                    None,
-                    None,
-                    "bc_web",  # IDEA: could be a `bc_web` or `ht_app - what does it mean?
-                ],
+        try:
+            self._logged_in = (
+                await self.wrkfnc_execute(
+                    "s_login",
+                    [
+                        username,
+                        password,
+                        None,
+                        None,
+                        "bc_web",  # IDEA: could be a `bc_web` or `ht_app - what does it mean?
+                    ],
+                )
+                == 1
             )
-            == 1
-        )
+        except BragerError as exception:
+            raise BragerAuthError(
+                "Error when logging in (wrong username/password)"
+            ) from exception
 
         return self._logged_in
 

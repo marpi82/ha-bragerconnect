@@ -1,4 +1,4 @@
-"""Asynchronous Python client for BragerConnect."""
+"""Exceptions for BragerConnect."""
 
 
 class BragerConnectionError(Exception):

@@ -1,4 +1,4 @@
-"""Asynchronous Python client for BragerConnect."""
+"""Constans for BragerConnect."""
 
 HOST: str = "wss://cloud.bragerconnect.com"
 TIMEOUT: int = 10
