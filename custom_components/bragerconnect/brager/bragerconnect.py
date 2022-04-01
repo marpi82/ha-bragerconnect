@@ -313,7 +313,7 @@ class BragerConnect:
         Args:
             wrkfnc_name (str): Function name to execute on server side
             wrkfnc_args (Optional[list], optional): Function parameters list. Defaults to None.
-            wrkfnc_type (MessageType, optional): Message type. Defaults to MessageType.FUNCTION_EXEC.
+            wrkfnc_type (MessageType, optional): Message type. Defaults to FUNCTION_EXEC.
 
         Returns:
             int: Sent messade ID
@@ -374,7 +374,7 @@ class BragerConnect:
         Args:
             wrkfnc_name (str): Function name to execute.
             wrkfnc_args (Optional[list], optional): Function parameters list. Defaults to None.
-            wrkfnc_type (MessageType, optional): Message type. Defaults to MessageType.FUNCTION_EXEC.
+            wrkfnc_type (MessageType, optional): Message type. Defaults to FUNCTION_EXEC.
 
         Returns:
             JSON_TYPE: Server response
