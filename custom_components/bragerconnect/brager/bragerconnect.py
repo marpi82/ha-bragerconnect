@@ -8,13 +8,13 @@ import logging
 import threading
 from typing import Any, Optional
 
-from pprint import pformat
 import backoff  # pylint: disable=unused-import
 import websockets
 
 from .const import JSON_TYPE, HOST, TIMEOUT
 from .exceptions import (
     BragerConnectionError,
+    BragerMessageException,
     BragerAuthError,
     BragerError,
 )
@@ -25,19 +25,23 @@ from .models import (
 
 _LOGGER = logging.getLogger(__package__)
 
-# TODO: Remove creating devices at connection establishion. Add get default device id
-
 
 class BragerConnect:
     """Main class for handling connections with BragerConnect."""
 
-    def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        language: str = "en",
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+    ) -> None:
         """Main class for handling connections with BragerConnect.
 
         Args:
             loop (Optional[asyncio.AbstractEventLoop], optional): Event loop. Defaults to None.
         """
-        self.host: str = HOST
+        self._host: str = HOST
 
         self._loop: asyncio.AbstractEventLoop = (
             loop if loop is not None else asyncio.get_event_loop()
@@ -52,8 +56,11 @@ class BragerConnect:
 
         self._logged_in: bool = False
 
-        self._language: Optional[str] = None
+        self._username: str = username
+        self._password: str = password
+        self._language: str = language
         self._active_device_id: Optional[str] = None
+        self._reconnect: bool = False
 
     @property
     def connected(self) -> bool:
@@ -73,14 +80,19 @@ class BragerConnect:
         """
         return self._logged_in
 
-    async def connect(self, username: str, password: str, language: str = "en") -> None:
+    @property
+    def reconnect(self) -> bool:
+        """TODO: docstring"""
+        return self._reconnect
+
+    @reconnect.setter
+    def reconnect(self, value: bool) -> None:
+        """TODO: docstring"""
+        self._reconnect = bool(value)
+
+    async def connect(self) -> None:
         """Connect to the WebSocket of a BragerConnect service.
         Authenticate user with given credentials, and sets default language
-
-        Args:
-            username (str): Username used to login
-            password (str): Password used to login
-            language (str, optional): language used to get messages. Defaults to "en".
 
         Raises:
             BragerConnectionError: Error occurred while communicating with the BragerConnect.
@@ -92,9 +104,7 @@ class BragerConnect:
 
         _LOGGER.info("Connecting to BragerConnect service via WebSocket.")
         try:
-            self._client = await websockets.connect(  # pylint: disable=no-member
-                uri=self.host
-            )
+            self._client = await websockets.connect(uri=self._host)  # pylint: disable=no-member
         except (
             websockets.exceptions.InvalidURI,
             websockets.exceptions.InvalidHandshake,
@@ -104,7 +114,7 @@ class BragerConnect:
             _LOGGER.exception("Error connecting to BragerConnect.")
             raise BragerConnectionError(
                 "Error occurred while communicating with BragerConnect service"
-                f" on WebSocket at {self.host}"
+                f" on WebSocket at {self._host}"
             ) from exception
 
         _LOGGER.debug("Waiting for READY_SIGNAL.")
@@ -122,39 +132,20 @@ class BragerConnect:
                 "READY_SIGNAL was expected."
             )
 
-        _LOGGER.debug("Creating task for received messages processing")
+        _LOGGER.info("Creating task for received messages processing")
         self._loop.create_task(self._process_messages())
 
-        await self._login(username, password)
+        await self._login(self._username, self._password)
 
-        if not self._language:
-            if not (
-                _language := await self.wrkfnc_set_user_variable(
-                    "preffered_lang", language
-                )
-            ):
-                raise BragerError(
-                    f"Error setting language ({language}) on BragerConnect service."
-                )
-
-            self._language = _language
+        if self._language:
+            if not await self.wrkfnc_set_user_variable("preffered_lang", self._language):
+                raise BragerError("Error setting language on BragerConnect service.")
 
         if not self._active_device_id:
             await self.wrkfnc_get_active_device_id()
 
-        if not self._device:
-            await self.update()
-        """
-        for device in self._device:
-            _LOGGER.debug(
-                "Device info: %s, pool(P4.v0=%s), len(task)=%d, len(alarm)=%d",
-                device.info.devid,
-                device.pool.get_field(4, 0, "v"),
-                len(device.task),
-                len(device.alarm),
-            )
-            print(pformat(device.status.get(), indent=4, depth=6))
-        """
+        # if not self._device:
+        #    await self.update()
 
     async def update(self) -> list[BragerDevice]:
         """Updates all devices existing on BragerConnect service.
@@ -178,9 +169,7 @@ class BragerConnect:
 
         return _device
 
-    async def update_device(
-        self, device_id: str, device_info: JSON_TYPE = None
-    ) -> BragerDevice:
+    async def update_device(self, device_id: str, device_info: JSON_TYPE = None) -> BragerDevice:
         """Updates the device with the given identifier.
         If the device does not exist, it will be created.
 
@@ -196,9 +185,7 @@ class BragerConnect:
         """
         # Check BragerDevice object is created for specified device_id, if not set _full_update
         if not (_full_update := self._device is None):
-            _full_update = not any(
-                device.info.devid == device_id for device in self._device
-            )
+            _full_update = not any(device.info.devid == device_id for device in self._device)
 
         _LOGGER.debug("Making full update? %s", _full_update)
 
@@ -216,9 +203,7 @@ class BragerConnect:
                     )
             else:
                 if device_info.get("devid") != device_id:
-                    raise BragerError(
-                        "Given device_id and device_info are for different devices."
-                    )
+                    raise BragerError("Given device_id and device_info are for different devices.")
                 else:
                     _info = device_info
 
@@ -263,25 +248,21 @@ class BragerConnect:
 
         _LOGGER.debug("Logging in.")
         try:
-            self._logged_in = (
-                await self.wrkfnc_execute(
-                    "s_login",
-                    [
-                        username,
-                        password,
-                        None,
-                        None,
-                        "bc_web",  # IDEA: could be a `bc_web` or `ht_app - what does it mean?
-                    ],
-                )
-                == 1
+            result = await self.wrkfnc_execute(
+                "s_login",
+                [
+                    username,
+                    password,
+                    None,
+                    None,
+                    "bc_web",  # IDEA: could be a `bc_web` or `ht_app - what does it mean?
+                ],
             )
-        except BragerError as exception:
-            raise BragerAuthError(
-                "Error when logging in (wrong username/password)"
-            ) from exception
-
-        return self._logged_in
+        except BragerMessageException as exception:
+            raise BragerAuthError("Error when logging in (wrong username/password)") from exception
+        else:
+            self._logged_in = result == 1
+            return self._logged_in
 
     async def _process_messages(self) -> None:
         """Main function that processes incoming messages from Websocket."""
@@ -302,7 +283,12 @@ class BragerConnect:
                     _LOGGER.error("Received message type is not known, skipping.")
                     continue
             except websockets.exceptions.ConnectionClosed:
-                continue
+                break
+        if self.reconnect:
+            self.logged_in = False
+            await self.connect()
+        else:
+            await self.disconnect()
 
     async def _process_request(self, wrkfnc: dict) -> None:
         """Function that processes messages containing the actions to be performed (requests)
@@ -355,15 +341,14 @@ class BragerConnect:
             message_id (int): Message ID number.
 
         Raises:
-            BragerError: Raised when received message is an exception from server.
-            BragerError: Raised when timeout was occured.
+            BragerError: When timeout occurs.
 
         Returns:
             JSON_TYPE: (str) Received message
         """
 
         try:
-            result: Any = await asyncio.wait_for(
+            result: JSON_TYPE = await asyncio.wait_for(
                 self._responses.setdefault(message_id, self._loop.create_future()),
                 TIMEOUT,
             )
@@ -373,17 +358,10 @@ class BragerConnect:
                 "Timed out while processing request response from BragerConnect service."
             ) from exception
         else:
-            wrkfnc_type = result.get("type")
-            wrkfnc_resp = result.get("resp")
-            if wrkfnc_type == MessageType.EXCEPTION:
-                _LOGGER.exception("Error while processing request response.")
-                raise BragerError(
-                    "Error while processing request response from BragerConnect service."
-                )
-            elif wrkfnc_type == MessageType.FUNCTION_RESP:
-                return wrkfnc_resp
-            else:
-                return None
+            if result.get("type") == MessageType.EXCEPTION:
+                _LOGGER.exception("Exception response received.")
+                raise BragerMessageException("Exception occured while processing request response.")
+            return result.get("resp")
 
     async def wrkfnc_execute(
         self,
@@ -411,10 +389,7 @@ class BragerConnect:
         Returns:
             list[JSON_TYPE]: list of dictionaries with information about devices.
         """
-        return await self.wrkfnc_execute(
-            "s_getMyDevIdList",
-            [],
-        )
+        return await self.wrkfnc_execute("s_getMyDevIdList", []) or []
 
     async def wrkfnc_get_active_device_id(self) -> str:
         """Gets the ID of the active device on the server
@@ -423,10 +398,7 @@ class BragerConnect:
             str: Active device ID
         """
         _LOGGER.debug("Getting active device id.")
-        _device_id = await self.wrkfnc_execute(
-            "s_getActiveDevid",
-            [],
-        )
+        _device_id = await self.wrkfnc_execute("s_getActiveDevid", [])
         device_id = str(_device_id)
         self._active_device_id = device_id
         return device_id
@@ -441,56 +413,32 @@ class BragerConnect:
             bool: True if setting was successfull, otherwise False
         """
         _LOGGER.debug("Setting active device id to: %s.", device_id)
-        result = (
-            await self.wrkfnc_execute(
-                "s_setActiveDevid",
-                [device_id],
-            )
-            is True
-        )
+        result = await self.wrkfnc_execute("s_setActiveDevid", [device_id]) is True
         self._active_device_id = device_id
         return result
 
     async def wrkfnc_get_user_variable(self, variable_name: str) -> str:
         """TODO: docstring"""
-        return await self.wrkfnc_execute(
-            "s_getUserVariable",
-            [variable_name],
-        )
+        return await self.wrkfnc_execute("s_getUserVariable", [variable_name])
 
     async def wrkfnc_set_user_variable(self, variable_name: str, value: str) -> bool:
         """TODO: docstring"""
-        return (
-            await self.wrkfnc_execute(
-                "s_setUserVariable",
-                [variable_name, value],
-            )
-            is None
-        )
+        return await self.wrkfnc_execute("s_setUserVariable", [variable_name, value]) is None
 
     async def wrkfnc_get_all_pool_data(self) -> JSON_TYPE:
         """TODO: docstring"""
         _LOGGER.debug("Getting pool data for %s.", self._active_device_id)
-        return await self.wrkfnc_execute(
-            "s_getAllPoolData",
-            [],
-        )
+        return await self.wrkfnc_execute("s_getAllPoolData", [])
 
     async def wrkfnc_get_task_queue(self) -> JSON_TYPE:
         """TODO: docstring"""
         _LOGGER.debug("Getting tasks data for %s.", self._active_device_id)
-        return await self.wrkfnc_execute(
-            "s_getTaskQueue",
-            [],
-        )
+        return await self.wrkfnc_execute("s_getTaskQueue", [])
 
     async def wrkfnc_get_alarm_list(self) -> JSON_TYPE:
         """TODO: docstring"""
         _LOGGER.debug("Getting alarms data for %s.", self._active_device_id)
-        return await self.wrkfnc_execute(
-            "s_getAlarmListExtended",
-            [],
-        )
+        return await self.wrkfnc_execute("s_getAlarmListExtended", [])
 
     def _generate_message_id(self) -> int:
         """Generates the next message ID number to sent request
@@ -507,6 +455,7 @@ class BragerConnect:
         if not self._client or not self.connected:
             return
         _LOGGER.info("disconnecting from BragerConnect service.")
+        self._reconnect = False
         self._logged_in = False
         await self._client.close()
 

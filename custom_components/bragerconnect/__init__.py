@@ -9,7 +9,15 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, PLATFORMS, CONF_USERNAME, CONF_PASSWORD, STARTUP_MESSAGE
+from .const import (
+    CONF_DEVICES_DEFAULT,
+    CONF_DEVICES_SELECTED,
+    DOMAIN,
+    PLATFORMS,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    STARTUP_MESSAGE,
+)
 from .api import BragerApiClient
 
 
@@ -27,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     client = BragerApiClient(username, password)
 
-    coordinator = BragerCoordinator(hass, client=client)
+    coordinator = BragerCoordinator(hass, client=client, entry=entry)
     await coordinator.async_refresh()
 
     if not coordinator.last_update_success:
@@ -37,9 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for platform in PLATFORMS:
         if entry.options.get(platform, True):
             coordinator.platforms.append(platform)
-            hass.async_add_job(
-                hass.config_entries.async_setup_platforms(entry, platform)
-            )
+            hass.async_add_job(hass.config_entries.async_setup_platforms(entry, platform))
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     return True
@@ -72,16 +78,21 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 class BragerCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
-    def __init__(self, hass: HomeAssistant, client: BragerApiClient) -> None:
+    def __init__(self, hass: HomeAssistant, client: BragerApiClient, entry: ConfigEntry) -> None:
         """Initialize."""
         self.api = client
         self.platforms = []
+
+        self.device_filter = entry.options.get(
+            CONF_DEVICES_SELECTED, entry.data.get(CONF_DEVICES_SELECTED, CONF_DEVICES_DEFAULT)
+        )
 
         super().__init__(hass, _LOGGER, name=DOMAIN)
 
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            return True  # await self.api.async_get_data()
+            # await self.api.update()
+            return True
         except Exception as exception:
             raise UpdateFailed() from exception

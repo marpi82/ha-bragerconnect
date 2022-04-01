@@ -18,7 +18,9 @@
             }
         },
         "error": {
-            "auth": "Username/Password is wrong."
+            "auth": "Username/Password is wrong.",
+            "cannot_connect": "Can't connect to BragerConnect.",
+            "unknown": "Unknown error."
         },
         "abort": {
             "single_instance_allowed": "Only a single instance is allowed."
