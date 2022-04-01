@@ -25,6 +25,8 @@ from .models import (
 
 _LOGGER = logging.getLogger(__package__)
 
+# TODO: Remove creating devices at connection establishion. Add get default device id
+
 
 class BragerConnect:
     """Main class for handling connections with BragerConnect."""
@@ -90,7 +92,9 @@ class BragerConnect:
 
         _LOGGER.info("Connecting to BragerConnect service via WebSocket.")
         try:
-            self._client = await websockets.connect(uri=self.host)  # pylint: disable=no-member
+            self._client = await websockets.connect(  # pylint: disable=no-member
+                uri=self.host
+            )
         except (
             websockets.exceptions.InvalidURI,
             websockets.exceptions.InvalidHandshake,
@@ -124,8 +128,14 @@ class BragerConnect:
         await self._login(username, password)
 
         if not self._language:
-            if not (_language := await self.wrkfnc_set_user_variable("preffered_lang", language)):
-                raise BragerError(f"Error setting language ({language}) on BragerConnect service.")
+            if not (
+                _language := await self.wrkfnc_set_user_variable(
+                    "preffered_lang", language
+                )
+            ):
+                raise BragerError(
+                    f"Error setting language ({language}) on BragerConnect service."
+                )
 
             self._language = _language
 
@@ -134,7 +144,7 @@ class BragerConnect:
 
         if not self._device:
             await self.update()
-
+        """
         for device in self._device:
             _LOGGER.debug(
                 "Device info: %s, pool(P4.v0=%s), len(task)=%d, len(alarm)=%d",
@@ -144,6 +154,7 @@ class BragerConnect:
                 len(device.alarm),
             )
             print(pformat(device.status.get(), indent=4, depth=6))
+        """
 
     async def update(self) -> list[BragerDevice]:
         """Updates all devices existing on BragerConnect service.
@@ -167,7 +178,9 @@ class BragerConnect:
 
         return _device
 
-    async def update_device(self, device_id: str, device_info: JSON_TYPE = None) -> BragerDevice:
+    async def update_device(
+        self, device_id: str, device_info: JSON_TYPE = None
+    ) -> BragerDevice:
         """Updates the device with the given identifier.
         If the device does not exist, it will be created.
 
@@ -183,7 +196,9 @@ class BragerConnect:
         """
         # Check BragerDevice object is created for specified device_id, if not set _full_update
         if not (_full_update := self._device is None):
-            _full_update = not any(device.info.devid == device_id for device in self._device)
+            _full_update = not any(
+                device.info.devid == device_id for device in self._device
+            )
 
         _LOGGER.debug("Making full update? %s", _full_update)
 
@@ -201,7 +216,9 @@ class BragerConnect:
                     )
             else:
                 if device_info.get("devid") != device_id:
-                    raise BragerError("Given device_id and device_info are for different devices.")
+                    raise BragerError(
+                        "Given device_id and device_info are for different devices."
+                    )
                 else:
                     _info = device_info
 
@@ -260,7 +277,9 @@ class BragerConnect:
                 == 1
             )
         except BragerError as exception:
-            raise BragerAuthError("Error when logging in (wrong username/password)") from exception
+            raise BragerAuthError(
+                "Error when logging in (wrong username/password)"
+            ) from exception
 
         return self._logged_in
 
@@ -486,9 +505,8 @@ class BragerConnect:
     async def disconnect(self) -> None:
         """Disconnect from the WebSocket of a BragerConnect service."""
         if not self._client or not self.connected:
-            _LOGGER.info("disconnecting from BragerConnect service.")
             return
-
+        _LOGGER.info("disconnecting from BragerConnect service.")
         self._logged_in = False
         await self._client.close()
 

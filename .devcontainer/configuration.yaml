@@ -5,6 +5,8 @@ logger:
   logs:
     custom_components.integration_blueprint: debug
     custom_components.detailed_hello_word_push: debug
+    custom_components.bragerconnect: debug
+    custom_components.bragerconnect.brager: info
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 # debugpy:
