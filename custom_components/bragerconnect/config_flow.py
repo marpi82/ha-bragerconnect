@@ -83,10 +83,10 @@ class BragerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         return await self._show_settings_form(user_input)
 
-    @staticmethod
-    @callback
-    def async_get_options_flow(config_entry):
-        return BragerOptionsFlowHandler(config_entry)
+    # @staticmethod
+    # @callback
+    # def async_get_options_flow(config_entry):
+    #    return BragerOptionsFlowHandler(config_entry)
 
     async def _show_config_form(self, user_input):  # pylint: disable=unused-argument
         """Show the configuration form to edit location data."""
@@ -129,7 +129,9 @@ class BragerOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Manage the options."""
-        self.coordinator: BragerCoordinator = self.hass.data[DOMAIN][self.config_entry.entry_id]
+        self.coordinator: BragerCoordinator = self.hass.data[DOMAIN][
+            self.config_entry.entry_id
+        ]
         return await self.async_step_device()
 
     async def async_step_device(self, user_input=None):
@@ -138,14 +140,10 @@ class BragerOptionsFlowHandler(config_entries.OptionsFlow):
             self.options.update(user_input)
             return await self._update_options()
 
-        # TODO: connection through coordinator not api
-        username = self.config_entry.data.get(CONF_USERNAME)
-        password = self.config_entry.data.get(CONF_PASSWORD)
-        async with BragerApiClient(username, password) as client:
-            await client.connect()
-            # device_id = await client.active_device
-            devices = await client.available_devices
-            _LOGGER.info("Found device ID's: %s", devices)
+        _LOGGER.debug("Options: %s", self.options)
+
+        devices = await self.coordinator.api.available_devices
+        _LOGGER.info("Found device ID's: %s", devices)
 
         return self.async_show_form(
             step_id="device",
